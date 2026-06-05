@@ -155,7 +155,21 @@ def inject_css():
     /* Hide Streamlit branding */
     #MainMenu { visibility: hidden; }
     footer { visibility: hidden; }
-    header { visibility: hidden; }
+    header { background: transparent; }
+
+    /* Style the sidebar collapse button to be visible and premium */
+    [data-testid="stSidebarCollapse"] {
+        background-color: #1A1A2E !important;
+        border: 1px solid #333355 !important;
+        border-radius: 8px !important;
+        color: #6C63FF !important;
+        transition: all 0.3s ease !important;
+    }
+    [data-testid="stSidebarCollapse"]:hover {
+        background-color: #6C63FF !important;
+        color: #FFFFFF !important;
+        box-shadow: 0 0 10px rgba(108, 99, 255, 0.5) !important;
+    }
 
     /* Gauge */
     .gauge-container {
@@ -892,10 +906,16 @@ def page_recommendations():
                 st.error(f"Error generating report: {e}")
 
 
-# ── Sidebar Navigation ────────────────────────────────────────────────────────
+# ── Navigation & Page Routing ──────────────────────────────────────────────────
+
+PAGES = ["📊 Executive Summary", "🔎 Customer Insights", "🎯 Prediction Center", "💡 Recommendations"]
 
 def main():
     inject_css()
+
+    # Initialize active page state
+    if "active_page" not in st.session_state:
+        st.session_state.active_page = PAGES[0]
 
     with st.sidebar:
         st.markdown("""
@@ -914,12 +934,16 @@ def main():
 
         st.markdown("---")
 
-        page = st.radio(
+        selected_page = st.radio(
             "Navigate",
-            ["📊 Executive Summary", "🔎 Customer Insights",
-             "🎯 Prediction Center", "💡 Recommendations"],
+            PAGES,
+            index=PAGES.index(st.session_state.active_page),
             label_visibility="collapsed",
         )
+        
+        if selected_page != st.session_state.active_page:
+            st.session_state.active_page = selected_page
+            st.rerun()
 
         st.markdown("---")
 
@@ -950,14 +974,28 @@ def main():
         </div>
         """, unsafe_allow_html=True)
 
-    # Route pages
-    if "Executive Summary" in page:
+    # ── Top Navigation Bar (Horizontal Tabs) ──
+    cols = st.columns(len(PAGES))
+    for i, p in enumerate(PAGES):
+        with cols[i]:
+            is_active = st.session_state.active_page == p
+            # Use primary type for active, secondary for inactive
+            if st.button(p, key=f"nav_btn_{i}", use_container_width=True, 
+                         type="primary" if is_active else "secondary"):
+                st.session_state.active_page = p
+                st.rerun()
+
+    st.markdown("<hr style='margin: 0.5rem 0 1.5rem 0; opacity: 0.1;'>", unsafe_allow_html=True)
+
+    # Route pages based on active_page
+    current_page = st.session_state.active_page
+    if "Executive Summary" in current_page:
         page_executive_summary()
-    elif "Customer Insights" in page:
+    elif "Customer Insights" in current_page:
         page_customer_insights()
-    elif "Prediction Center" in page:
+    elif "Prediction Center" in current_page:
         page_prediction_center()
-    elif "Recommendations" in page:
+    elif "Recommendations" in current_page:
         page_recommendations()
 
 
