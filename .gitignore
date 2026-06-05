@@ -1,0 +1,40 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+dist/
+build/
+*.egg
+
+# Virtual environments
+venv/
+env/
+.venv/
+
+# Generated data (run the pipeline to regenerate)
+data/raw/*.csv
+data/processed/*.csv
+
+# Trained models (run train_model.py to regenerate)
+models/*.pkl
+models/*.json
+
+# Generated reports (run eda.py, segmentation.py, explainability.py, report_generator.py)
+reports/*.png
+reports/*.pdf
+reports/*.json
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Jupyter
+.ipynb_checkpoints/
