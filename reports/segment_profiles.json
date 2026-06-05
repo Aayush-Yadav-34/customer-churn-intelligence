@@ -1,0 +1,26 @@
+[
+  {
+    "Segment":"High-Value Customers",
+    "Count":1989,
+    "Avg Tenure":51.94,
+    "Avg Monthly":86.7,
+    "Avg Total":4477.66,
+    "Churn Rate":0.27
+  },
+  {
+    "Segment":"Loyal Customers",
+    "Count":1821,
+    "Avg Tenure":26.09,
+    "Avg Monthly":29.39,
+    "Avg Total":735.24,
+    "Churn Rate":0.24
+  },
+  {
+    "Segment":"New Customers",
+    "Count":3233,
+    "Avg Tenure":10.31,
+    "Avg Monthly":86.89,
+    "Avg Total":887.29,
+    "Churn Rate":0.51
+  }
+]

@@ -1,0 +1,45 @@
+[
+  {
+    "category": "Contract",
+    "insight": "Customers on month-to-month contracts are 2.5x more likely to churn.",
+    "churn_rate_mtm": 0.526,
+    "churn_rate_other": 0.207,
+    "priority": "high"
+  },
+  {
+    "category": "Tenure & Charges",
+    "insight": "Customers with tenure < 12 months and monthly charges > $70 have a 56% churn rate.",
+    "affected_customers": 2008,
+    "churn_rate": 0.561,
+    "priority": "high"
+  },
+  {
+    "category": "Internet Service",
+    "insight": "Fiber optic customers churn at 47% vs 36% for DSL \u2014 investigate service quality.",
+    "fiber_churn_rate": 0.465,
+    "dsl_churn_rate": 0.361,
+    "priority": "medium"
+  },
+  {
+    "category": "Demographics",
+    "insight": "Senior citizens have a 40% churn rate vs 37% for non-seniors.",
+    "priority": "medium"
+  },
+  {
+    "category": "Payment",
+    "insight": "Electronic check users churn at 41% vs 36% for auto-payment customers.",
+    "priority": "medium"
+  },
+  {
+    "category": "Model",
+    "insight": "Top churn drivers: tenure, Contract_Month-to-month, Contract_Two year.",
+    "top_features": [
+      "tenure",
+      "Contract_Month-to-month",
+      "Contract_Two year",
+      "is_new_month_to_month",
+      "Contract_One year"
+    ],
+    "priority": "info"
+  }
+]
