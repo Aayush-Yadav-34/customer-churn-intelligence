@@ -54,6 +54,17 @@ COLORS = {
     "muted": "#888899",
 }
 
+CURRENCY_RATES = {
+    "$": 1.0,
+    "€": 0.92,
+    "₹": 83.5,
+    "£": 0.78,
+    "¥": 156.0
+}
+
+def get_currency_rate():
+    return CURRENCY_RATES.get(st.session_state.get("currency_symbol", "$"), 1.0)
+
 PLOTLY_TEMPLATE = {
     "layout": {
         "paper_bgcolor": COLORS["bg"],
@@ -296,17 +307,19 @@ def page_executive_summary():
     avg_monthly = df["MonthlyCharges"].mean()
     retained_revenue = df[df["Churn"] == "No"]["TotalCharges"].sum()
 
+    sym = st.session_state.get("currency_symbol", "$")
+    rate = get_currency_rate()
     col1, col2, col3, col4, col5 = st.columns(5)
     with col1:
         kpi_card("Total Customers", f"{total:,}")
     with col2:
         kpi_card("Churn Rate", f"{churn_rate:.1%}", "↑ Action needed", "bad")
     with col3:
-        kpi_card("Revenue at Risk", f"${revenue_risk:,.0f}")
+        kpi_card("Revenue at Risk", f"{sym}{revenue_risk * rate:,.0f}")
     with col4:
         kpi_card("Avg Tenure", f"{avg_tenure:.1f} mo")
     with col5:
-        kpi_card("Avg Monthly", f"${avg_monthly:.2f}")
+        kpi_card("Avg Monthly", f"{sym}{avg_monthly * rate:.2f}")
 
     st.markdown("<br>", unsafe_allow_html=True)
 
@@ -335,16 +348,18 @@ def page_executive_summary():
 
     with col_right:
         section_header("Revenue Breakdown")
+        sym = st.session_state.get("currency_symbol", "$")
+        rate = get_currency_rate()
         fig = go.Figure(data=[go.Bar(
             x=["Retained Revenue", "Revenue at Risk"],
-            y=[retained_revenue, revenue_risk],
+            y=[retained_revenue * rate, revenue_risk * rate],
             marker_color=[COLORS["secondary"], COLORS["danger"]],
-            text=[f"${retained_revenue:,.0f}", f"${revenue_risk:,.0f}"],
+            text=[f"{sym}{retained_revenue * rate:,.0f}", f"{sym}{revenue_risk * rate:,.0f}"],
             textposition="outside",
             textfont=dict(size=13, color=COLORS["text"]),
         )])
         fig.update_layout(
-            yaxis_title="Revenue ($)",
+            yaxis_title=f"Revenue ({sym})",
             showlegend=False,
         )
         fig = plotly_layout(fig, 350)
@@ -467,29 +482,34 @@ def page_customer_insights():
 
     with col3:
         section_header("Monthly Charges Distribution")
+        sym = st.session_state.get("currency_symbol", "$")
+        rate = get_currency_rate()
         fig = go.Figure()
         for status, color, name in zip(
             ["No", "Yes"], [COLORS["secondary"], COLORS["danger"]],
             ["Retained", "Churned"]
         ):
-            subset = filtered[filtered["Churn"] == status]["MonthlyCharges"]
+            subset = filtered[filtered["Churn"] == status]["MonthlyCharges"] * rate
             fig.add_trace(go.Histogram(
                 x=subset, name=name, marker_color=color, opacity=0.7, nbinsx=30,
             ))
-        fig.update_layout(barmode="overlay", xaxis_title="Monthly Charges ($)",
+        fig.update_layout(barmode="overlay", xaxis_title=f"Monthly Charges ({sym})",
                           yaxis_title="Count")
         fig = plotly_layout(fig, 380)
         st.plotly_chart(fig, use_container_width=True)
 
     with col4:
         section_header("Tenure vs Monthly Charges")
-        sample = filtered.sample(min(1000, len(filtered)), random_state=42)
+        sym = st.session_state.get("currency_symbol", "$")
+        rate = get_currency_rate()
+        sample = filtered.sample(min(1000, len(filtered)), random_state=42).copy()
+        sample["MonthlyCharges_Converted"] = sample["MonthlyCharges"] * rate
         fig = px.scatter(
-            sample, x="tenure", y="MonthlyCharges", color="Churn",
+            sample, x="tenure", y="MonthlyCharges_Converted", color="Churn",
             color_discrete_map={"No": COLORS["secondary"], "Yes": COLORS["danger"]},
             opacity=0.5, hover_data=["Contract", "PaymentMethod"],
         )
-        fig.update_layout(xaxis_title="Tenure (months)", yaxis_title="Monthly Charges ($)")
+        fig.update_layout(xaxis_title="Tenure (months)", yaxis_title=f"Monthly Charges ({sym})")
         fig = plotly_layout(fig, 380)
         st.plotly_chart(fig, use_container_width=True)
 
@@ -526,15 +546,21 @@ def page_customer_insights():
         with sc2:
             kpi_card("Avg Tenure", f"{seg_subset['tenure'].mean():.1f} mo")
         with sc3:
-            kpi_card("Avg Monthly", f"${seg_subset['MonthlyCharges'].mean():.2f}")
+            sym = st.session_state.get("currency_symbol", "$")
+            rate = get_currency_rate()
+            kpi_card("Avg Monthly", f"{sym}{seg_subset['MonthlyCharges'].mean() * rate:.2f}")
         with sc4:
             seg_churn = (seg_subset["Churn"] == "Yes").mean()
             kpi_card("Churn Rate", f"{seg_churn:.1%}")
 
         st.markdown("<br>", unsafe_allow_html=True)
+        seg_display = seg_subset.copy()
+        rate = get_currency_rate()
+        seg_display["MonthlyCharges"] = np.round(seg_display["MonthlyCharges"] * rate, 2)
+        seg_display["TotalCharges"] = np.round(seg_display["TotalCharges"] * rate, 2)
         st.dataframe(
-            seg_subset[["customerID", "gender", "tenure", "Contract",
-                        "MonthlyCharges", "TotalCharges", "Churn"]].head(20),
+            seg_display[["customerID", "gender", "tenure", "Contract",
+                         "MonthlyCharges", "TotalCharges", "Churn"]].head(20),
             use_container_width=True,
         )
 
@@ -584,7 +610,19 @@ def _single_prediction(model, scaler, feature_names):
             ])
 
         with col3:
-            monthly = st.slider("Monthly Charges ($)", 18.0, 120.0, 65.0, 0.5)
+            sym = st.session_state.get("currency_symbol", "$")
+            rate = get_currency_rate()
+            if rate < 10:
+                min_val = float(np.round(18.0 * rate, 2))
+                max_val = float(np.round(120.0 * rate, 2))
+                default_val = float(np.round(65.0 * rate, 2))
+                step_val = max(0.01, float(np.round(0.5 * rate, 2)))
+            else:
+                min_val = float(np.round(18.0 * rate))
+                max_val = float(np.round(120.0 * rate))
+                default_val = float(np.round(65.0 * rate))
+                step_val = 1.0
+            monthly = st.slider(f"Monthly Charges ({sym})", min_val, max_val, default_val, step_val)
             online_security = st.selectbox("Online Security", ["Yes", "No", "No internet service"])
             online_backup = st.selectbox("Online Backup", ["Yes", "No", "No internet service"])
             tech_support = st.selectbox("Tech Support", ["Yes", "No", "No internet service"])
@@ -596,12 +634,16 @@ def _single_prediction(model, scaler, feature_names):
         # Build feature dict
         from src.prediction import prepare_customer_for_prediction
 
+        rate = get_currency_rate()
+        monthly_usd = monthly / rate
+        total_usd = monthly_usd * max(tenure, 1)
+
         raw_input = {
             "gender": gender, "SeniorCitizen": senior, "Partner": partner,
             "Dependents": dependents, "tenure": tenure, "Contract": contract,
             "InternetService": internet, "PhoneService": phone,
             "PaperlessBilling": paperless, "PaymentMethod": payment,
-            "MonthlyCharges": monthly, "TotalCharges": monthly * max(tenure, 1),
+            "MonthlyCharges": monthly_usd, "TotalCharges": total_usd,
             "OnlineSecurity": online_security, "OnlineBackup": online_backup,
             "TechSupport": tech_support, "DeviceProtection": device_protection,
             "MultipleLines": "No" if phone == "No" else "Yes",
@@ -610,8 +652,8 @@ def _single_prediction(model, scaler, feature_names):
                                             tech_support, device_protection] if s == "Yes"),
             "has_premium_support": 1 if all(s == "Yes" for s in [
                 online_security, tech_support, device_protection]) else 0,
-            "avg_monthly_charge": monthly,
-            "charge_per_service": monthly,
+            "avg_monthly_charge": monthly_usd,
+            "charge_per_service": monthly_usd,
             "is_new_month_to_month": 1 if contract == "Month-to-month" and tenure <= 12 else 0,
             "is_long_term_customer": 1 if contract in ["One year", "Two year"] and tenure > 36 else 0,
         }
@@ -743,9 +785,12 @@ def _batch_prediction(model, scaler, feature_names):
             st.plotly_chart(fig, use_container_width=True)
 
             # Show results
+            rate = get_currency_rate()
+            df_display = batch_df.copy()
+            df_display["MonthlyCharges"] = np.round(df_display["MonthlyCharges"] * rate, 2)
             st.dataframe(
-                batch_df[["customerID", "tenure", "MonthlyCharges", "Contract",
-                          "Churn_Probability", "Risk_Level"]].sort_values(
+                df_display[["customerID", "tenure", "MonthlyCharges", "Contract",
+                            "Churn_Probability", "Risk_Level"]].sort_values(
                     "Churn_Probability", ascending=False
                 ),
                 use_container_width=True,
@@ -799,11 +844,14 @@ def page_recommendations():
     # Recommendations
     section_header("Actionable Retention Strategies")
 
+    sym = st.session_state.get("currency_symbol", "$")
+    rate = get_currency_rate()
+
     recommendations = [
         {
             "title": "🎁 Introduce Loyalty Discounts",
-            "detail": "Offer loyalty discounts for customers with tenure under 12 months "
-                      "and monthly charges above $70. This targets the highest-risk segment.",
+            "detail": f"Offer loyalty discounts for customers with tenure under 12 months "
+                      f"and monthly charges above {sym}{70 * rate:.0f}. This targets the highest-risk segment.",
             "impact": "Could reduce churn by 15-20% in the at-risk segment.",
             "priority": "High",
             "color": COLORS["danger"],
@@ -826,8 +874,8 @@ def page_recommendations():
         },
         {
             "title": "💳 Migrate from Electronic Check",
-            "detail": "Customers paying by electronic check churn significantly more. "
-                      "Offer auto-payment setup incentives (e.g., $5/month credit).",
+            "detail": f"Customers paying by electronic check churn significantly more. "
+                      f"Offer auto-payment setup incentives (e.g., {sym}{5 * rate:.0f}/month credit).",
             "impact": "Reduce friction-based churn in the payment process.",
             "priority": "Medium",
             "color": COLORS["warning"],
@@ -873,15 +921,17 @@ def page_recommendations():
         total_risk = df[df["Churn"] == "Yes"]["TotalCharges"].sum()
         avg_clv = df[df["Churn"] == "No"]["TotalCharges"].mean()
 
+        sym = st.session_state.get("currency_symbol", "$")
+        rate = get_currency_rate()
         col1, col2, col3 = st.columns(3)
         with col1:
-            kpi_card("Revenue at Risk", f"${total_risk:,.0f}")
+            kpi_card("Revenue at Risk", f"{sym}{total_risk * rate:,.0f}")
         with col2:
             saved_10 = total_risk * 0.10
-            kpi_card("Save 10% Churn", f"${saved_10:,.0f}", "Conservative", "good")
+            kpi_card("Save 10% Churn", f"{sym}{saved_10 * rate:,.0f}", "Conservative", "good")
         with col3:
             saved_25 = total_risk * 0.25
-            kpi_card("Save 25% Churn", f"${saved_25:,.0f}", "Optimistic", "good")
+            kpi_card("Save 25% Churn", f"{sym}{saved_25 * rate:,.0f}", "Optimistic", "good")
 
     # Generate Report button
     st.markdown("<br>", unsafe_allow_html=True)
@@ -890,8 +940,13 @@ def page_recommendations():
     if st.button("📄 Generate PDF Report", use_container_width=True):
         with st.spinner("Generating report..."):
             try:
+                import importlib
+                import src.report_generator
+                importlib.reload(src.report_generator)
                 from src.report_generator import generate_report
-                report_path = generate_report()
+                sym = st.session_state.get("currency_symbol", "$")
+                rate = get_currency_rate()
+                report_path = generate_report(currency_symbol=sym, currency_rate=rate)
                 st.success(f"✅ Report generated: {report_path}")
 
                 with open(report_path, "rb") as f:
@@ -916,6 +971,8 @@ def main():
     # Initialize active page state
     if "active_page" not in st.session_state:
         st.session_state.active_page = PAGES[0]
+    if "currency_symbol" not in st.session_state:
+        st.session_state.currency_symbol = "$"
 
     with st.sidebar:
         st.markdown("""
@@ -943,6 +1000,22 @@ def main():
         
         if selected_page != st.session_state.active_page:
             st.session_state.active_page = selected_page
+            st.rerun()
+
+        st.markdown("---")
+
+        # Currency Selector
+        curr_options = ["USD ($)", "EUR (€)", "INR (₹)", "GBP (£)", "JPY (¥)"]
+        curr_symbols = ["$", "€", "₹", "£", "¥"]
+        default_idx = curr_symbols.index(st.session_state.currency_symbol) if st.session_state.currency_symbol in curr_symbols else 0
+        selected_curr = st.selectbox(
+            "Select Currency",
+            curr_options,
+            index=default_idx,
+        )
+        new_symbol = curr_symbols[curr_options.index(selected_curr)]
+        if new_symbol != st.session_state.currency_symbol:
+            st.session_state.currency_symbol = new_symbol
             st.rerun()
 
         st.markdown("---")

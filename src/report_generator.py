@@ -144,7 +144,7 @@ def build_cover_page(styles) -> list:
     return elements
 
 
-def build_executive_summary(styles, df: pd.DataFrame) -> list:
+def build_executive_summary(styles, df: pd.DataFrame, currency_symbol: str = "$", currency_rate: float = 1.0) -> list:
     """Build the executive summary section with KPIs."""
     elements = []
     elements.append(Paragraph("1. Executive Summary", styles["SectionTitle"]))
@@ -155,14 +155,14 @@ def build_executive_summary(styles, df: pd.DataFrame) -> list:
 
     total_customers = len(df)
     churn_rate = (df["Churn"] == "Yes").mean()
-    revenue_at_risk = df[df["Churn"] == "Yes"]["TotalCharges"].sum()
+    revenue_at_risk = df[df["Churn"] == "Yes"]["TotalCharges"].sum() * currency_rate
     avg_tenure = df["tenure"].mean()
-    avg_monthly = df["MonthlyCharges"].mean()
+    avg_monthly = df["MonthlyCharges"].mean() * currency_rate
 
     elements.append(Paragraph(
         f"This report analyzes <b>{total_customers:,}</b> customers to identify churn patterns, "
         f"risk factors, and actionable retention strategies. The current churn rate stands at "
-        f"<b>{churn_rate:.1%}</b>, with an estimated <b>${revenue_at_risk:,.0f}</b> in revenue at risk.",
+        f"<b>{churn_rate:.1%}</b>, with an estimated <b>{currency_symbol}{revenue_at_risk:,.0f}</b> in revenue at risk.",
         styles["BodyText2"],
     ))
 
@@ -171,7 +171,7 @@ def build_executive_summary(styles, df: pd.DataFrame) -> list:
     # KPI table
     kpi_data = [
         ["Total Customers", "Churn Rate", "Revenue at Risk", "Avg Tenure"],
-        [f"{total_customers:,}", f"{churn_rate:.1%}", f"${revenue_at_risk:,.0f}",
+        [f"{total_customers:,}", f"{churn_rate:.1%}", f"{currency_symbol}{revenue_at_risk:,.0f}",
          f"{avg_tenure:.1f} months"],
     ]
     kpi_table = Table(kpi_data, colWidths=[1.5 * inch] * 4)
@@ -234,7 +234,7 @@ def build_eda_section(styles) -> list:
     return elements
 
 
-def build_segmentation_section(styles) -> list:
+def build_segmentation_section(styles, currency_symbol: str = "$", currency_rate: float = 1.0) -> list:
     """Build the customer segmentation section."""
     elements = []
     elements.append(PageBreak())
@@ -263,7 +263,7 @@ def build_segmentation_section(styles) -> list:
                 p.get("Segment", ""),
                 str(p.get("Count", "")),
                 f"{p.get('Avg Tenure', 0):.1f}",
-                f"${p.get('Avg Monthly', 0):.2f}",
+                f"{currency_symbol}{p.get('Avg Monthly', 0) * currency_rate:.2f}",
                 f"{p.get('Churn Rate', 0):.1%}",
             ])
 
@@ -398,7 +398,7 @@ def build_insights_section(styles) -> list:
     return elements
 
 
-def build_recommendations_section(styles, df: pd.DataFrame) -> list:
+def build_recommendations_section(styles, df: pd.DataFrame, currency_symbol: str = "$", currency_rate: float = 1.0) -> list:
     """Build the recommendations section."""
     elements = []
     elements.append(PageBreak())
@@ -411,8 +411,8 @@ def build_recommendations_section(styles, df: pd.DataFrame) -> list:
     recommendations = [
         {
             "title": "Introduce Loyalty Discounts",
-            "detail": "Offer loyalty discounts for customers with tenure under 12 months "
-                      "and monthly charges above $70. This targets the highest-risk segment.",
+            "detail": f"Offer loyalty discounts for customers with tenure under 12 months "
+                      f"and monthly charges above {currency_symbol}{70 * currency_rate:.0f}. This targets the highest-risk segment.",
             "priority": "High",
             "impact": "Could reduce churn by 15-20% in the at-risk segment.",
         },
@@ -433,8 +433,8 @@ def build_recommendations_section(styles, df: pd.DataFrame) -> list:
         },
         {
             "title": "Migrate from Electronic Check",
-            "detail": "Customers paying by electronic check churn significantly more. "
-                      "Offer auto-payment setup incentives (e.g., $5/month credit).",
+            "detail": f"Customers paying by electronic check churn significantly more. "
+                      f"Offer auto-payment setup incentives (e.g., {currency_symbol}{5 * currency_rate:.0f}/month credit).",
             "priority": "Medium",
             "impact": "Reduce friction-based churn in the payment process.",
         },
@@ -473,11 +473,14 @@ def build_recommendations_section(styles, df: pd.DataFrame) -> list:
     return elements
 
 
-def generate_report(output_path: str = None) -> str:
+def generate_report(output_path: str = None, currency_symbol: str = "$", currency_rate: float = 1.0) -> str:
     """Generate the full PDF report."""
     print("=" * 60)
     print("  BUSINESS REPORT GENERATOR")
     print("=" * 60)
+
+    # Map Rupee symbol to standard "Rs." to prevent encoding/rendering black boxes in PDF standard Helvetica font
+    pdf_symbol = "Rs." if currency_symbol == "₹" else currency_symbol
 
     if output_path is None:
         output_path = os.path.join(os.path.abspath(REPORTS_DIR), "churn_report.pdf")
@@ -507,13 +510,13 @@ def generate_report(output_path: str = None) -> str:
     elements.extend(build_cover_page(styles))
     print("  ✅ Cover page")
 
-    elements.extend(build_executive_summary(styles, df))
+    elements.extend(build_executive_summary(styles, df, pdf_symbol, currency_rate))
     print("  ✅ Executive summary")
 
     elements.extend(build_eda_section(styles))
     print("  ✅ EDA findings")
 
-    elements.extend(build_segmentation_section(styles))
+    elements.extend(build_segmentation_section(styles, pdf_symbol, currency_rate))
     print("  ✅ Segmentation results")
 
     elements.extend(build_model_section(styles))
@@ -522,7 +525,7 @@ def generate_report(output_path: str = None) -> str:
     elements.extend(build_insights_section(styles))
     print("  ✅ Key insights")
 
-    elements.extend(build_recommendations_section(styles, df))
+    elements.extend(build_recommendations_section(styles, df, pdf_symbol, currency_rate))
     print("  ✅ Recommendations")
 
     # Build PDF
