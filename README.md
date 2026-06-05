@@ -59,6 +59,7 @@ customer-churn-intelligence/
 ├── .streamlit/
 │   └── config.toml             # Streamlit theme configuration
 ├── requirements.txt
+├── run_pipeline.py            # End-to-end pipeline runner
 └── README.md
 ```
 
@@ -84,6 +85,16 @@ pip install -r requirements.txt
 ### Run the Full Pipeline
 
 > **Note:** The `data/`, `models/`, and `reports/` folders are empty after cloning. Running the pipeline below generates all datasets, model artifacts, charts, and reports.
+
+To run the entire end-to-end pipeline with a single command:
+
+```bash
+python run_pipeline.py
+```
+
+This runs all 8 pipeline steps in sequence, handles Windows Unicode encoding automatically, and generates all cleaned data, models, reports, and insights.
+
+Alternatively, you can run individual scripts from the `src/` directory in order:
 
 ```bash
 # 1. Generate synthetic dataset

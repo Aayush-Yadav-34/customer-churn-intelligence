@@ -22,6 +22,7 @@ customer-churn-intelligence/
 ├── models/              → Saved ML model artifacts
 ├── reports/             → Generated charts, insights, and PDF report
 ├── requirements.txt     → Python dependencies
+├── run_pipeline.py      → End-to-end pipeline runner
 ├── README.md            → Project documentation
 └── summary.md           → This file
 ```
@@ -35,6 +36,7 @@ customer-churn-intelligence/
 | File | Description |
 |---|---|
 | `requirements.txt` | Lists all 12 Python packages needed to run the project (pandas, scikit-learn, xgboost, shap, streamlit, reportlab, etc.) |
+| `run_pipeline.py` | Runs the entire end-to-end pipeline (generation to report generation) with a single command |
 | `README.md` | Full project documentation with setup instructions, features list, and tech stack badges |
 | `summary.md` | This summary document |
 
@@ -147,7 +149,15 @@ pip install -r requirements.txt
 ```
 
 ### Step 2 — Run the Data Pipeline
-Run these commands **in order** from the project root:
+Run the entire end-to-end pipeline with a single command from the project root:
+
+```bash
+python run_pipeline.py
+```
+
+This runs all 8 pipeline steps in sequence, handles Windows Unicode encoding automatically, and generates all cleaned data, models, reports, and insights.
+
+Alternatively, you can run individual scripts from the `src/` directory in order:
 
 ```bash
 # Generate the synthetic dataset
@@ -175,19 +185,11 @@ python src/explainability.py
 python src/report_generator.py
 ```
 
-> **Note (Windows):** If you get Unicode errors, prefix commands with:
-> `$env:PYTHONIOENCODING='utf-8'; python src/generate_dataset.py`
-
 ### Step 3 — Launch the Dashboard
 ```bash
 streamlit run dashboard/app.py
 ```
-Opens at **http://localhost:8501** with all 4 pages ready to explore.
-
-### Quick One-Liner (Run Entire Pipeline)
-```bash
-python src/generate_dataset.py && python src/data_cleaning.py && python src/feature_engineering.py && python src/eda.py && python src/segmentation.py && python src/train_model.py && python src/explainability.py && python src/report_generator.py
-```
+Opens at **http://localhost:8501** with all 4 pages and a synchronized top navigation bar ready to explore.
 
 ---
 
