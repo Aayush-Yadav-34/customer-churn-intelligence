@@ -18,8 +18,8 @@ An end-to-end analytics platform that analyzes customer behavior, identifies chu
 | **Customer Segmentation** | K-Means clustering into 4 segments: Loyal, High-Value, At-Risk, New Customers |
 | **Churn Prediction Engine** | Logistic Regression, Random Forest, XGBoost with GridSearchCV and SMOTE |
 | **Explainable AI** | SHAP feature importance, beeswarm plots, dependence plots, natural-language insights |
-| **Interactive Dashboard** | 4-page Streamlit app with KPIs, filters, prediction center, and batch upload |
-| **Automated PDF Report** | Professional business report with KPIs, charts, findings, and recommendations |
+| **Interactive Dashboard** | 4-page Streamlit app with KPIs, filters, prediction center, batch upload, and multi-currency support |
+| **Automated PDF Report** | Professional business report matching the selected dashboard currency (USD, EUR, INR, GBP, JPY) |
 
 ---
 

@@ -88,7 +88,7 @@ These scripts are designed to be run **in order** (each depends on the previous 
 
 | File | Description |
 |---|---|
-| `app.py` | **Interactive Streamlit web application** with 4 pages: |
+| `app.py` | **Interactive Streamlit web application** with 4 pages, featuring synchronized top navigation, responsive design, and a global currency selector (supporting USD, EUR, INR, GBP, JPY): |
 
 **Page 1 — Executive Summary:** KPI cards (total customers, churn rate, revenue at risk, avg tenure), churn donut chart, revenue breakdown bar chart, segment distribution, top churn drivers list.
 
