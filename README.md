@@ -15,7 +15,7 @@ An end-to-end analytics platform that analyzes customer behavior, identifies chu
 |---|---|
 | **Data Cleaning Pipeline** | Handles missing values, duplicates, anomalies, type casting, and validation |
 | **Exploratory Data Analysis** | 8+ publication-quality visualizations covering demographics, services, revenue, and tenure |
-| **Customer Segmentation** | K-Means clustering into 4 segments: Loyal, High-Value, At-Risk, New Customers |
+| **Customer Segmentation** | K-Means clustering into 3 segments: Loyal, High-Value, and New Customers |
 | **Churn Prediction Engine** | Logistic Regression, Random Forest, XGBoost with GridSearchCV and SMOTE |
 | **Explainable AI** | SHAP feature importance, beeswarm plots, dependence plots, natural-language insights |
 | **Interactive Dashboard** | 4-page Streamlit app with KPIs, filters, prediction center, batch upload, and multi-currency support |
@@ -155,21 +155,20 @@ The platform trains and compares three models:
 
 | Model | Accuracy | Precision | Recall | F1 Score | ROC-AUC |
 |---|---|---|---|---|---|
-| Logistic Regression | - | - | - | - | - |
-| Random Forest | - | - | - | - | - |
-| XGBoost | - | - | - | - | - |
-
-*Metrics populated after training.*
+| **Logistic Regression** (Selected) | 0.6835 | 0.5609 | **0.6851** | **0.6168** | 0.7492 |
+| Random Forest | 0.6849 | 0.5769 | 0.5725 | 0.5747 | 0.7334 |
+| XGBoost | **0.7019** | **0.5945** | 0.6240 | 0.6089 | **0.7566** |
 
 ---
 
 ## 💡 Key Insights (Examples)
 
-- 🔴 Customers on month-to-month contracts are **3x more likely** to churn
-- 🔴 Short tenure (<12 months) + high charges (>$70) → **65% churn rate**
-- 🟡 Fiber optic customers churn more despite paying premium prices
-- 🟡 Electronic check users have the highest churn rate among payment methods
-- 🔵 Online Security and Tech Support are strong retention drivers
+- 🔴 Customers on month-to-month contracts are **2.5x more likely** to churn (52.6% vs 20.7%)
+- 🔴 Short tenure (<12 months) + high charges (>$70) → **56% churn rate**
+- 🟡 Fiber optic customers churn at **47%** vs **36%** for DSL (investigate quality-price perception)
+- 🟡 Electronic check users churn at **41%** vs **36%** for auto-payment methods
+- 🔵 Senior citizens churn at a higher rate (**40%** vs **37%**)
+- 🔵 Top feature drivers: `tenure`, `Contract_Month-to-month`, `Contract_Two year`
 
 ---
 
