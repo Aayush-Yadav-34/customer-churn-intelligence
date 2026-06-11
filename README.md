@@ -172,6 +172,20 @@ The platform trains and compares three models:
 
 ---
 
+## 📂 Sample Data & Reports
+
+You can explore the sample datasets and generated files directly to understand the system inputs and output quality:
+
+* **Raw Input Data**: [data/raw/telco_churn.csv](data/raw/telco_churn.csv) — The raw synthetic customer database used to train and test the model.
+* **Processed/Cleaned Data**: [data/processed/cleaned_churn.csv](data/processed/cleaned_churn.csv) — Data generated after parsing, imputing missing values, and scaling.
+* **Customer Segmentation Profiles**: [reports/segment_profiles.json](reports/segment_profiles.json) — Summarized behaviors of the customer segments created.
+* **Key Findings / Insights**: [reports/insights.json](reports/insights.json) — Model-derived, priority-tagged natural language insights.
+* **SHAP Feature Importance**: [reports/14_feature_importance.png](reports/14_feature_importance.png) — Graphical plot explaining the primary model decision drivers.
+* **Generated Business Report (PDF)**: [reports/churn_report.pdf](reports/churn_report.pdf) — The automated, formatted PDF business report.
+
+---
+
 ## 📄 License
 
 This project is open source and available under the [MIT License](LICENSE).
+
